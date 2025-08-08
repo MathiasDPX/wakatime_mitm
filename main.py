@@ -1,57 +1,29 @@
 from flask import Flask, request, Response
+import pytoml as toml
+import apps
 import requests
-import re
 
 app = Flask(__name__)
 
-class App:
-    def __init__(self, name):
-        self.name = name
-        self.routes = {}
-
-    def handle(self, route):
-        def decorator(func):
-            self.routes[route] = func
-            return func
-        return decorator
-
-    def dispatch(self, route, data=None):
-        handler = self.routes[route]
-        heartbeat = handler(data)
-        print(heartbeat)
-
-        return heartbeat
-    
-leetcode = App("LeetCode.nvim")
-
-@leetcode.handle("users/current/heartbeats.bulk")
-@leetcode.handle("users/current/heartbeats")
-def leetcode_change_proj_name(data:dict):
-    for entry in data:
-        match = re.match(r'\/.+\/\.local\/share\/nvim\/leetcode\/(\d+)\.', entry.get("entity", ""))
-
-        if match:
-            id = match.group(1)
-            entry["project"] = f"LeetCode {id}"
-            print(entry["project"])
-
-    return data
-
-apps = [leetcode]
+with open("config.toml", "rb") as fin:
+    config = toml.load(fin)
 
 @app.route('/', defaults={'path': ''}, methods=["GET", "DELETE", "POST"])
 @app.route('/<path:path>', methods=["GET", "DELETE", "POST"])
 def catch_all(path):
     method = request.method
-    url = f"https://hackatime.hackclub.com/api/hackatime/v1/{path}"
+    url = f"{config.get('redirect-url', '')}{path}"
     headers = {key: value for key, value in request.headers if key.lower() != 'host'}
     data = request.get_json()
 
-
     if method == "POST":
-        for app in apps:
-            data = app.dispatch(path, data)
-            
+        for app in apps.apps:
+            if config.get("apps",{}).get(app.name,{}).get("enabled", False):
+                data = app.dispatch(path, data)
+                print(f"[✓] {app.name}")
+            else:
+                print(f"[X] {app.name}")
+
     resp = requests.request(
         method=method,
         url=url,
@@ -69,4 +41,5 @@ def catch_all(path):
 
     return Response(resp.content, status=resp.status_code, headers=response_headers)
 
-app.run(host="0.0.0.0")
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
