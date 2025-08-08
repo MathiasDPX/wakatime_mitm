@@ -26,7 +26,7 @@ def catch_all(path):
 
     for app in apps.apps:
         if config.get("apps",{}).get(app.name,{}).get("enabled", False):
-            data = app._dispatch(path, data, headers)
+            data = app._predispatch(path, data, headers)
 
     resp = requests.request(
         method=method,
@@ -40,10 +40,16 @@ def catch_all(path):
         stream=True
     )
 
+    resp_data = resp.content
+
+    for app in apps.apps:
+        if config.get("apps",{}).get(app.name,{}).get("enabled", False):
+            resp_data = app._postdispatch(path, resp_data, resp.headers)
+
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
     response_headers = [(k, v) for k, v in resp.raw.headers.items() if k.lower() not in excluded_headers]
 
-    return Response(resp.content, status=resp.status_code, headers=response_headers)
+    return Response(resp_data, status=resp.status_code, headers=response_headers)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
