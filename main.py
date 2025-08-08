@@ -1,28 +1,35 @@
 from flask import Flask, request, Response
+from os import environ
 import pytoml as toml
 import apps
 import requests
 
 app = Flask(__name__)
 
-with open("config.toml", "rb") as fin:
-    config = toml.load(fin)
+with open("config.toml", "r", encoding="utf-8") as f:
+    raw_config = f.read()
+    config = toml.loads(raw_config)
+
+environ["WAKAMITM_CONFIG"] = raw_config
 
 @app.route('/', defaults={'path': ''}, methods=["GET", "DELETE", "POST"])
 @app.route('/<path:path>', methods=["GET", "DELETE", "POST"])
 def catch_all(path):
     method = request.method
     url = f"{config.get('redirect-url', '')}{path}"
-    headers = {key: value for key, value in request.headers if key.lower() != 'host'}
-    data = request.get_json()
+    headers ={key: value for key, value in request.headers if key.lower() != 'host'}
 
     if method == "POST":
-        for app in apps.apps:
-            if config.get("apps",{}).get(app.name,{}).get("enabled", False):
-                data = app.dispatch(path, data)
-                print(f"[✓] {app.name}")
-            else:
-                print(f"[X] {app.name}")
+        data = request.get_json()
+    else:
+        data = request.get_data()
+
+    for app in apps.apps:
+        if config.get("apps",{}).get(app.name,{}).get("enabled", False):
+            data = app._dispatch(path, data)
+            print(f"[✓] {app.name}")
+        else:
+            print(f"[X] {app.name}")
 
     resp = requests.request(
         method=method,

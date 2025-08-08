@@ -1,0 +1,8 @@
+redirect-url = "https://hackatime.hackclub.com/api/hackatime/v1/"
+
+[apps.leetcode-nvim]
+enabled = true
+
+[apps.auth]
+enabled = true
+tokens = []
