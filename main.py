@@ -26,10 +26,7 @@ def catch_all(path):
 
     for app in apps.apps:
         if config.get("apps",{}).get(app.name,{}).get("enabled", False):
-            data = app._dispatch(path, data)
-            print(f"[✓] {app.name}")
-        else:
-            print(f"[X] {app.name}")
+            data = app._dispatch(path, data, headers)
 
     resp = requests.request(
         method=method,

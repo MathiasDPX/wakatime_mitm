@@ -11,10 +11,12 @@ class App:
         return decorator
 
     def _dispatch(self, route, data=None, headers={}):
-        if "*" in list(self.routes.keys()):
+        if "*" in self.routes:
             handler = self.routes["*"]
-        else:
+        elif route in self.routes:
             handler = self.routes[route]
+        else:
+            return data
 
         heartbeat = handler(
             headers=headers,
