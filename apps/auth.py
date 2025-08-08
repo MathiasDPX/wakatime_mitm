@@ -14,7 +14,7 @@ def verify_token(headers:dict, data:dict):
     token = auth_header.replace("Bearer ", "")
     token = auth_header.strip()
 
-    if auth_header not in tokens:
+    if token not in tokens:
         abort(403)
         return {}
 
