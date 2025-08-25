@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, redirect
 import concurrent.futures
 from os import environ
 import pytoml as toml
@@ -17,6 +17,10 @@ environ["WAKAMITM_CONFIG"] = raw_config
 @app.route('/<path:path>', methods=["GET", "DELETE", "POST"])
 def catch_all(path):
     method = request.method
+
+    if path == "" and method == "GET":
+        return redirect("https://github.com/MathiasDPX/wakatime_mitm")
+
     args = request.args
     cookies = request.cookies
     headers ={key: value for key, value in request.headers if key.lower() != 'host'}
