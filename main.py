@@ -23,6 +23,9 @@ def catch_all(path):
     if path == "" and method == "GET":
         return redirect("https://github.com/MathiasDPX/wakatime_mitm")
 
+    if path == "healthcheck" and method == "GET":
+        return {"status": "OK"}
+
     args = request.args
     cookies = request.cookies
     headers = {key: value for key, value in request.headers if key.lower() != 'host'}
