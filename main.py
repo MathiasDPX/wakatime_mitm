@@ -13,6 +13,8 @@ with open("config.toml", "r", encoding="utf-8") as f:
 
 environ["WAKAMITM_CONFIG"] = raw_config
 
+enabled_apps = [app for app in apps.apps if config.get("apps",{}).get(app.name,{}).get("enabled", False)]
+
 @app.route('/', defaults={'path': ''}, methods=["GET", "DELETE", "POST"])
 @app.route('/<path:path>', methods=["GET", "DELETE", "POST"])
 def catch_all(path):
@@ -23,15 +25,15 @@ def catch_all(path):
 
     args = request.args
     cookies = request.cookies
-    headers ={key: value for key, value in request.headers if key.lower() != 'host'}
+    headers = {key: value for key, value in request.headers if key.lower() != 'host'}
+    headers["X-Middleware-Apps"] = ",".join([app.name for app in enabled_apps])
 
     if method == "POST":
         data = request.get_json()
     else:
         data = request.get_data()
 
-    for app in apps.apps:
-        if config.get("apps",{}).get(app.name,{}).get("enabled", False):
+    for app in enabled_apps:
             data = app._predispatch(path, data, headers)
 
     def send_heartbeat(backend):
