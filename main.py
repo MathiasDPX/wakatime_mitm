@@ -33,9 +33,11 @@ def catch_all(path):
     else:
         data = request.get_data()
 
+    # Preprocess heartbeats
     for app in enabled_apps:
-            data = app._predispatch(path, data, headers)
+        data = app._predispatch(path, data, headers)
 
+    # Send heartbeats in concurrence for faster response
     def send_heartbeat(backend):
         newheaders = headers.copy() # uuhh if it's not a copy it's not work 
         newheaders["Authorization"] = backend[1]
@@ -60,9 +62,9 @@ def catch_all(path):
     response = results[0]
     resp_data = response.content
 
-    for app in apps.apps:
-        if config.get("apps",{}).get(app.name,{}).get("enabled", False):
-            resp_data = app._postdispatch(path, resp_data, response.headers)
+    # Postprocess response
+    for app in enabled_apps:
+        resp_data = app._postdispatch(path, resp_data, response.headers)
 
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
     response_headers = [(k, v) for k, v in response.raw.headers.items() if k.lower() not in excluded_headers]
