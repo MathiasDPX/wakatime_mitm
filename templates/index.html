@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wakatime-mitm</title>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap');body {font-family: "Golos Text", sans-serif;font-optical-sizing: auto;font-weight: 450;font-style: normal;}a {color: black;}br {padding-bottom: 0.25em;}</style>
+</head>
+<body>
+    Backends:<br>
+    {% for backend in backends %}
+    - <a href="{{ backend.homepage }}">{{ backend.name }}</a><br>
+    {% endfor %}
+</body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, redirect
+from flask import Flask, request, Response, render_template
 import concurrent.futures
 from os import environ
 import pytoml as toml
@@ -13,6 +13,14 @@ with open("config.toml", "r", encoding="utf-8") as f:
 
 environ["WAKAMITM_CONFIG"] = raw_config
 
+class Backend:
+    def __init__(self, name:str, api:str, token:str, homepage:str=None):
+        self.name = name
+        self.api = api
+        self.token = token
+        self.homepage = homepage if homepage != None else api
+
+backends = [Backend(key, **data) for key, data in config.get("redirector", {}).items()]
 enabled_apps = [app for app in apps.apps if config.get("apps",{}).get(app.name,{}).get("enabled", False)]
 
 @app.route('/', defaults={'path': ''}, methods=["GET", "DELETE", "POST"])
@@ -21,7 +29,7 @@ def catch_all(path):
     method = request.method
 
     if path == "" and method == "GET":
-        return redirect("https://github.com/MathiasDPX/wakatime_mitm")
+        return render_template("index.html", backends=backends)
 
     if path == "healthcheck" and method == "GET":
         return {"status": "OK"}
@@ -41,13 +49,13 @@ def catch_all(path):
         data = app._predispatch(path, data, headers)
 
     # Send heartbeats in concurrence for faster response
-    def send_heartbeat(backend):
+    def send_heartbeat(backend:Backend):
         newheaders = headers.copy() # uuhh if it's not a copy it's not work 
-        newheaders["Authorization"] = backend[1]
+        newheaders["Authorization"] = backend.token
 
         resp = requests.request(
             method=method,
-            url=backend[0]+path,
+            url=backend.api+path,
             headers=newheaders,
             params=args,
             json=data if method == "POST" and data else None,
@@ -60,7 +68,7 @@ def catch_all(path):
         return resp
     
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(executor.map(send_heartbeat, config.get("redirector", {}).get("backends", [])))
+        results = list(executor.map(send_heartbeat, backends))
 
     response = results[0]
     resp_data = response.content
