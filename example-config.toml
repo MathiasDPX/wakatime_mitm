@@ -1,9 +1,16 @@
 [redirector]
-backends = [
-    ["https://hackatime.hackclub.com/api/hackatime/v1/", "Basic B64_TOKEN"], # wakamitm will use this url to return to the user
-    ["https://api.wakatime.com/api/v1/", "Bearer AnotherToken"]
-]
 
+[redirector.wakatime]
+homepage = "https://wakatime.com/"
+api = "https://api.wakatime.com/api/v1/"
+token = "Basic B64_TOKEN"
+
+[redirector.hackatime]
+homepage = "https://hackatime.hackclub.com/"
+api = "https://hackatime.hackclub.com/api/hackatime/v1/"
+token = "Bearer AnotherToken"
+
+[apps]
 [apps.leetcode-nvim]
 enabled = true
 
