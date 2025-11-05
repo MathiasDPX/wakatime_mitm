@@ -3,6 +3,10 @@ name: Docker Image CI
 on:
   push:
     branches: [ "master" ]
+    paths-ignore:
+      - "example-config.toml"
+      - ".gitignore"
+      - "README.md"
 
 
 jobs:
